@@ -3,6 +3,7 @@ pymongo
 python-dotenv
 flask-wtf
 email-validator
+flask-mail
 dnspython
 requests
 cloudinary
