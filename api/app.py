@@ -7,7 +7,7 @@ from pymongo import MongoClient
 from setting import Config
 from flask_mail import Mail, Message
 import uuid
-import cloudinary
+import cloudinarygi
 import cloudinary.uploader
 from io import BytesIO
 
@@ -102,15 +102,21 @@ def send_order_email(order):
     )
     mail.send(msg)
 
-@app.route("/track/<order_id>")
-def track_email(order_id):
+@app.route("/order/<order_id>")
+def view_order(order_id):
+    order = orders_collection.find_one({"order_id": order_id})
+    if not order:
+        return "Đơn hàng không tồn tại", 404
     # Cập nhật trạng thái email_opened
     orders_collection.update_one(
         {"order_id": order_id},
         {"$set": {"email_opened": True}}
     )
-    # Trả về URL của tracking pixel từ Cloudinary
-    return redirect(tracking_pixel_base_url)
+    return render_template("order_detail.html", order=order)
+
+@app.route("/track/<order_id>")
+def track_email(order_id):
+    return redirect(url_for("view_order", order_id=order_id))
 
 @app.route("/orders")
 def view_orders():

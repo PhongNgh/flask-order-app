@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chi tiết đơn hàng</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; }
+        img { max-width: 200px; }
+    </style>
+</head>
+<body>
+    <h1>Chi tiết đơn hàng</h1>
+    <p><strong>Mã đơn hàng:</strong> {{ order.order_id }}</p>
+    <p><strong>Tên khách hàng:</strong> {{ order.customer_name }}</p>
+    <p><strong>Email:</strong> {{ order.customer_email }}</p>
+    <p><strong>Sản phẩm:</strong> {{ order.product_name }}</p>
+    <p><strong>Giá:</strong> {{ order.product_price }} VND</p>
+    {% if order.product_image_url %}
+    <p><strong>Ảnh sản phẩm:</strong><br><img src="{{ order.product_image_url }}" alt="Ảnh sản phẩm"></p>
+    {% endif %}
+    <p><a href="{{ url_for('view_orders') }}">Quay lại danh sách đơn hàng</a></p>
+</body>
+</html>
