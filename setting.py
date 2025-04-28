@@ -12,10 +12,10 @@ class Config:
     MAIL_USE_TLS = os.getenv("MAIL_USE_TLS") == "True"
     MAIL_USERNAME = os.getenv("MAIL_USERNAME")
     MAIL_PASSWORD = os.getenv("MAIL_PASSWORD")
-
     CLOUDINARY_CLOUD_NAME = os.getenv("CLOUDINARY_CLOUD_NAME")
     CLOUDINARY_API_KEY = os.getenv("CLOUDINARY_API_KEY")
     CLOUDINARY_API_SECRET = os.getenv("CLOUDINARY_API_SECRET")
+    BREVO_API_KEY = os.getenv("BREVO_API_KEY")
 
 cloudinary.config(
     cloud_name=Config.CLOUDINARY_CLOUD_NAME,
