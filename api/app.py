@@ -4,7 +4,7 @@ from flask_wtf.file import FileField, FileAllowed
 from wtforms import StringField, FloatField, SubmitField
 from wtforms.validators import DataRequired, Email
 from pymongo import MongoClient
-from settings import Config
+from setting import Config
 import sib_api_v3_sdk
 from sib_api_v3_sdk.rest import ApiException
 import uuid
