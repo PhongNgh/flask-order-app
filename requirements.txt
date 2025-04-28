@@ -1,0 +1,9 @@
+flask
+pymongo
+python-dotenv
+flask-wtf
+email-validator
+dnspython
+requests
+cloudinary
+Pillow

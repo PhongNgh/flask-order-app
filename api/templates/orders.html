@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Danh sách đơn hàng</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .opened { color: green; }
+        .not-opened { color: red; }
+        img { max-width: 100px; }
+    </style>
+</head>
+<body>
+    <h1>Danh sách đơn hàng</h1>
+    <a href="{{ url_for('create_order') }}">Tạo đơn hàng mới</a>
+    <table>
+        <thead>
+            <tr>
+                <th>Mã đơn hàng</th>
+                <th>Tên khách hàng</th>
+                <th>Email</th>
+                <th>Sản phẩm</th>
+                <th>Giá</th>
+                <th>Ảnh sản phẩm</th>
+                <th>Trạng thái email</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for order in orders %}
+            <tr>
+                <td>{{ order.order_id }}</td>
+                <td>{{ order.customer_name }}</td>
+                <td>{{ order.customer_email }}</td>
+                <td>{{ order.product_name }}</td>
+                <td>{{ order.product_price }} VND</td>
+                <td>
+                    {% if order.product_image_url %}
+                    <img src="{{ order.product_image_url }}" alt="Ảnh sản phẩm">
+                    {% else %}
+                    Không có ảnh
+                    {% endif %}
+                </td>
+                <td class="{% if order.email_opened %}opened{% else %}not-opened{% endif %}">
+                    {{ "Đã mở" if order.email_opened else "Chưa mở" }}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

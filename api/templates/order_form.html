@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Tạo đơn hàng</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; }
+        input, button { width: 100%; padding: 8px; }
+        .message { color: green; }
+    </style>
+</head>
+<body>
+    <h1>Tạo đơn hàng mới</h1>
+    <a href="{{ url_for('view_orders') }}">Xem danh sách đơn hàng</a><br><br>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <p class="message">{{ message }}</p>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    <form method="POST" enctype="multipart/form-data">
+        {{ form.hidden_tag() }}
+        <div class="form-group">
+            <label>{{ form.customer_name.label }}</label>
+            {{ form.customer_name() }}
+        </div>
+        <div class="form-group">
+            <label>{{ form.customer_email.label }}</label>
+            {{ form.customer_email() }}
+        </div>
+        <div class="form-group">
+            <label>{{ form.product_name.label }}</label>
+            {{ form.product_name() }}
+        </div>
+        <div class="form-group">
+            <label>{{ form.product_price.label }}</label>
+            {{ form.product_price() }}
+        </div>
+        <div class="form-group">
+            <label>{{ form.product_image.label }}</label>
+            {{ form.product_image() }}
+        </div>
+        {{ form.submit() }}
+    </form>
+</body>
+</html>

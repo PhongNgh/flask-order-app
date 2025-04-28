@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Xác nhận đơn hàng</title>
+</head>
+<body>
+    <h2>Xác nhận đơn hàng</h2>
+    <p>Kính gửi {{ order.customer_name }},</p>
+    <p>Cảm ơn bạn đã đặt hàng! Dưới đây là chi tiết đơn hàng của bạn:</p>
+    <ul>
+        <li><strong>Mã đơn hàng:</strong> {{ order.order_id }}</li>
+        <li><strong>Sản phẩm:</strong> {{ order.product_name }}</li>
+        <li><strong>Giá:</strong> {{ order.product_price }} VND</li>
+        {% if order.product_image_url %}
+        <li><strong>Ảnh sản phẩm:</strong><br><img src="{{ order.product_image_url }}" width="200" alt="Ảnh sản phẩm"></li>
+        {% endif %}
+    </ul>
+    <p>Trân trọng,</p>
+    <p>Đội ngũ bán hàng</p>
+    <!-- Ảnh pixel để theo dõi -->
+    <img src="{{ tracking_pixel }}" width="1" height="1" alt="">
+</body>
+</html>
