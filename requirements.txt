@@ -8,3 +8,5 @@ dnspython
 requests
 cloudinary
 Pillow
+sendgrid
+sib-api-v3-sdk

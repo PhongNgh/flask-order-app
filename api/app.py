@@ -4,10 +4,11 @@ from flask_wtf.file import FileField, FileAllowed
 from wtforms import StringField, FloatField, SubmitField
 from wtforms.validators import DataRequired, Email
 from pymongo import MongoClient
-from setting import Config
-from flask_mail import Mail, Message
+from settings import Config
+import sib_api_v3_sdk
+from sib_api_v3_sdk.rest import ApiException
 import uuid
-import cloudinarygi
+import cloudinary
 import cloudinary.uploader
 from io import BytesIO
 
@@ -19,8 +20,10 @@ client = MongoClient(app.config["MONGO_URI"])
 db = client.get_database()
 orders_collection = db.orders
 
-# Cấu hình Flask-Mail
-mail = Mail(app)
+# Khởi tạo Brevo
+configuration = sib_api_v3_sdk.Configuration()
+configuration.api_key['api-key'] = app.config["BREVO_API_KEY"]
+api_instance = sib_api_v3_sdk.TransactionalEmailsApi(sib_api_v3_sdk.ApiClient(configuration))
 
 # Form tạo đơn hàng
 class OrderForm(FlaskForm):
@@ -30,26 +33,6 @@ class OrderForm(FlaskForm):
     product_price = FloatField("Giá sản phẩm", validators=[DataRequired()])
     product_image = FileField("Ảnh sản phẩm", validators=[FileAllowed(['jpg', 'png', 'jpeg'], 'Chỉ cho phép ảnh JPG, PNG!')])
     submit = SubmitField("Tạo đơn hàng")
-
-# Tạo tracking pixel và tải lên Cloudinary (chỉ tạo một lần)
-def create_and_upload_tracking_pixel():
-    from PIL import Image
-    img = Image.new("RGB", (1, 1), color="white")
-    buffer = BytesIO()
-    img.save(buffer, format="PNG")
-    buffer.seek(0)
-    
-    # Tải lên Cloudinary
-    response = cloudinary.uploader.upload(
-        buffer,
-        folder="tracking_pixels",
-        public_id="tracking_pixel",
-        overwrite=True
-    )
-    return response["secure_url"]
-
-# Lấy URL tracking pixel từ Cloudinary
-tracking_pixel_base_url = create_and_upload_tracking_pixel()
 
 @app.route("/", methods=["GET", "POST"])
 def create_order():
@@ -76,8 +59,7 @@ def create_order():
             "product_name": form.product_name.data,
             "product_price": form.product_price.data,
             "product_image_url": product_image_url,
-            "email_opened": False,
-            "tracking_pixel_url": f"{url_for('track_email', order_id=order_id, _external=True)}"
+            "email_opened": False
         }
         orders_collection.insert_one(order_data)
 
@@ -89,39 +71,59 @@ def create_order():
     return render_template("order_form.html", form=form)
 
 def send_order_email(order):
-    msg = Message(
-        subject="Xác nhận đơn hàng",
-        sender=app.config["MAIL_USERNAME"],
-        recipients=[order["customer_email"]]
-    )
-    # Nội dung email với tracking pixel từ Cloudinary
-    msg.html = render_template(
+    sender = {"name": "Đội ngũ bán hàng", "email": app.config["MAIL_USERNAME"]}
+    to = [{"email": order["customer_email"], "name": order["customer_name"]}]
+    html_content = render_template(
         "email_template.html",
         order=order,
-        tracking_pixel=order["tracking_pixel_url"]
+        tracking_pixel=url_for("view_order", order_id=order["order_id"], _external=True)
     )
-    mail.send(msg)
+    # Gắn order_id vào tags để nhận diện trong webhook
+    tags = [order["order_id"]]
+    try:
+        send_smtp_email = sib_api_v3_sdk.SendSmtpEmail(
+            sender=sender,
+            to=to,
+            subject="Xác nhận đơn hàng",
+            html_content=html_content,
+            tags=tags
+        )
+        api_instance.send_transac_email(send_smtp_email)
+        print(f"Email sent to {order['customer_email']}")
+    except ApiException as e:
+        print(f"Error sending email: {e}")
 
 @app.route("/order/<order_id>")
 def view_order(order_id):
     order = orders_collection.find_one({"order_id": order_id})
     if not order:
         return "Đơn hàng không tồn tại", 404
-    # Cập nhật trạng thái email_opened
+    # Cập nhật trạng thái email_opened (khi người dùng nhấp vào liên kết)
     orders_collection.update_one(
         {"order_id": order_id},
         {"$set": {"email_opened": True}}
     )
     return render_template("order_detail.html", order=order)
 
-@app.route("/track/<order_id>")
-def track_email(order_id):
-    return redirect(url_for("view_order", order_id=order_id))
-
 @app.route("/orders")
 def view_orders():
     orders = list(orders_collection.find())
     return render_template("orders.html", orders=orders)
+
+# Webhook để nhận sự kiện từ Brevo
+@app.route("/webhook", methods=["POST"])
+def brevo_webhook():
+    events = request.get_json()
+    for event in events:
+        if event.get("event") == "opened":
+            order_id = event.get("tags", [None])[0]  # Lấy order_id từ tags
+            if order_id:
+                orders_collection.update_one(
+                    {"order_id": order_id},
+                    {"$set": {"email_opened": True}}
+                )
+                print(f"Email opened for order {order_id}")
+    return "", 200
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
